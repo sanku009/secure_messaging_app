@@ -32,8 +32,8 @@ def launch_gui():
     def send_callback(event=None):
         msg = entry.get()
         if msg:
-            nonce, ciphertext, tag = aes.encrypt(msg.encode())
-            client_socket.sendall(nonce + tag + ciphertext)
+            encrypted = aes.encrypt(msg)
+            client_socket.sendall(encrypted.encode())
 
             chat_display.config(state='normal')
             chat_display.insert('end', f"You: {msg}\n")
@@ -43,13 +43,10 @@ def launch_gui():
     def receive_messages():
         while True:
             try:
-                data = client_socket.recv(1024)
+                data = client_socket.recv(2048)
                 if data:
-                    nonce = data[:16]
-                    tag = data[16:32]
-                    ciphertext = data[32:]
                     try:
-                        decrypted = aes.decrypt(nonce, ciphertext, tag).decode()
+                        decrypted = aes.decrypt(data.decode())
                         chat_display.config(state='normal')
                         chat_display.insert('end', f"Friend: {decrypted}\n")
                         chat_display.config(state='disabled')
@@ -71,13 +68,10 @@ def launch_cli():
     def receive_messages():
         while True:
             try:
-                data = client_socket.recv(1024)
+                data = client_socket.recv(2048)
                 if data:
-                    nonce = data[:16]
-                    tag = data[16:32]
-                    ciphertext = data[32:]
                     try:
-                        decrypted = aes.decrypt(nonce, ciphertext, tag).decode()
+                        decrypted = aes.decrypt(data.decode())
                         print(f"\nFriend: {decrypted}")
                     except:
                         print("\n❌ Failed to decrypt message.")
@@ -88,8 +82,8 @@ def launch_cli():
         while True:
             msg = input("You: ")
             if msg:
-                nonce, ciphertext, tag = aes.encrypt(msg.encode())
-                client_socket.sendall(nonce + tag + ciphertext)
+                encrypted = aes.encrypt(msg)
+                client_socket.sendall(encrypted.encode())
 
     threading.Thread(target=receive_messages, daemon=True).start()
     send_messages()
