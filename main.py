@@ -66,7 +66,8 @@ class SecureMessengerApp:
         encrypted = self.queue.dequeue()
         try:
             cipher = AESCipher(key)
-            decrypted = cipher.decrypt(encrypted)
+            nonce, ciphertext, tag = encrypted
+            decrypted = cipher.decrypt(nonce, ciphertext, tag).decode()
             timestamp = datetime.datetime.now().strftime("%H:%M:%S")
             self.output_text.insert(tk.END, f"[{timestamp}] ✅ Decrypted: {decrypted}\n")
         except Exception as e:
