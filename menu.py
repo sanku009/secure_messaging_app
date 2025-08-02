@@ -1,30 +1,23 @@
-import subprocess
-import sys
+import os
 
-def menu():
+def main_menu():
     while True:
-        print("\n=== Secure Messaging App Menu ===")
-        print("1. Launch GUI")
-        print("2. Start Server (CLI)")
-        print("3. Start Client (CLI)")
-        print("4. Run Unit Tests")
-        print("5. Exit")
+        print("\n🔐 Secure Messaging App")
+        print("1. Start Server")
+        print("2. Start Client")
+        print("3. Exit")
 
-        choice = input("Choose an option (1-5): ").strip()
+        choice = input("Enter your choice (1/2/3): ").strip()
 
-        if choice == "1":
-            subprocess.run([sys.executable, "main.py"])
-        elif choice == "2":
-            subprocess.run([sys.executable, "server.py"])
-        elif choice == "3":
-            subprocess.run([sys.executable, "client.py"])
-        elif choice == "4":
-            subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "tests"])
-        elif choice == "5":
-            print("Exiting...")
+        if choice == '1':
+            os.system("python server.py")
+        elif choice == '2':
+            os.system("python client.py")
+        elif choice == '3':
+            print("Goodbye!")
             break
         else:
-            print("Invalid option. Please try again.")
+            print("Invalid input. Please try again.")
 
 if __name__ == "__main__":
-    menu()
+    main_menu()
