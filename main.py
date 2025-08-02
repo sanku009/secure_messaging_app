@@ -9,7 +9,7 @@ class SecureMessengerApp:
         self.root = root
         self.root.title("🔐 Secure Messaging App")
         self.root.geometry("700x500")
-        self.root.configure(bg="#f0f2f5")
+        self.root.configure(bg="#788fb3")
         self.queue = MessageQueue()
 
         style = ttk.Style()
