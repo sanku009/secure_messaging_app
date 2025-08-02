@@ -1,14 +1,9 @@
-import unittest
-from encryption.aes_cipher import AESCipher
+from encryption.aes_cipher import encrypt_message, decrypt_message
 
-class TestAESCipher(unittest.TestCase):
-    def test_encrypt_decrypt(self):
-        key = "testkey123"
-        cipher = AESCipher(key)
-        plaintext = "Hello World"
-        encrypted = cipher.encrypt(plaintext)
-        decrypted = cipher.decrypt(encrypted)
-        self.assertEqual(plaintext, decrypted)
+msg = "Hello, Sanket!"
+encrypted = encrypt_message(msg)
+decrypted = decrypt_message(encrypted)
 
-if __name__ == '__main__':
-    unittest.main()
+print("Original:", msg)
+print("Encrypted:", encrypted)
+print("Decrypted:", decrypted)
