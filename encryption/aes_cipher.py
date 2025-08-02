@@ -3,10 +3,19 @@ from Crypto.Random import get_random_bytes
 from Crypto.Hash import SHA256
 import base64
 
+from Crypto.Hash import SHA256
+
 class AESCipher:
-    def __init__(self, password: str):
-        # Derive a secure 32-byte key from the password using SHA256
-        self.key = SHA256.new(data=password.encode()).digest()
+    def __init__(self, password):
+        # Accept either str or bytes
+        if isinstance(password, str):
+            password_bytes = password.encode()
+        elif isinstance(password, bytes):
+            password_bytes = password
+        else:
+            raise TypeError("Password must be str or bytes")
+
+        self.key = SHA256.new(data=password_bytes).digest()
 
     def encrypt(self, plaintext: str) -> str:
         cipher = AES.new(self.key, AES.MODE_EAX)
