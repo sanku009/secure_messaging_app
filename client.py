@@ -14,6 +14,9 @@ aes = AESCipher(KEY)
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((SERVER_IP, SERVER_PORT))
 
+username = input("Enter your username: ").strip()
+client_socket.sendall(username.encode())
+
 # === GUI Mode ===
 def launch_gui():
     root = tk.Tk()
@@ -48,7 +51,7 @@ def launch_gui():
                     try:
                         decrypted = aes.decrypt(data.decode())
                         chat_display.config(state='normal')
-                        chat_display.insert('end', f"Friend: {decrypted}\n")
+                        chat_display.insert('end', f"{decrypted}\n")
                         chat_display.config(state='disabled')
                     except:
                         chat_display.config(state='normal')
@@ -72,7 +75,7 @@ def launch_cli():
                 if data:
                     try:
                         decrypted = aes.decrypt(data.decode())
-                        print(f"\nFriend: {decrypted}")
+                        print(f"\n{decrypted}")
                     except:
                         print("\n❌ Failed to decrypt message.")
             except:
@@ -80,7 +83,7 @@ def launch_cli():
 
     def send_messages():
         while True:
-            msg = input("You: ")
+            msg = input("You (@recipient: message): ").strip()
             if msg:
                 encrypted = aes.encrypt(msg)
                 client_socket.sendall(encrypted.encode())
