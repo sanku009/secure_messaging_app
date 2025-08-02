@@ -3,8 +3,6 @@ from Crypto.Random import get_random_bytes
 from Crypto.Hash import SHA256
 import base64
 
-from Crypto.Hash import SHA256
-
 class AESCipher:
     def __init__(self, password):
         # Accept either str or bytes
@@ -18,9 +16,13 @@ class AESCipher:
         self.key = SHA256.new(data=password_bytes).digest()
 
     def encrypt(self, plaintext: str) -> str:
+        # Ensure plaintext is bytes
+        if isinstance(plaintext, str):
+            plaintext = plaintext.encode()
+
         cipher = AES.new(self.key, AES.MODE_EAX)
         nonce = cipher.nonce
-        ciphertext, tag = cipher.encrypt_and_digest(plaintext.encode())
+        ciphertext, tag = cipher.encrypt_and_digest(plaintext)
 
         # Combine nonce, tag, and ciphertext for storage/transmission
         encrypted_data = nonce + tag + ciphertext
