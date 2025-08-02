@@ -49,4 +49,4 @@ def handle_client(client_socket, address):
 
     print(f"[-] Connection closed from {address}")
     clients.remove(client_socket)
-    client_socke_
+    client_socket
