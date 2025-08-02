@@ -7,7 +7,7 @@ from encryption.aes_cipher import AESCipher
 # === Configuration ===
 SERVER_IP = '127.0.0.1'
 SERVER_PORT = 5000
-KEY = "12345"  # Must match server.py
+KEY = "12345"
 aes = AESCipher(KEY)
 
 # === Socket Setup ===
@@ -35,8 +35,8 @@ def launch_gui():
     def send_callback(event=None):
         msg = entry.get()
         if msg:
-            encrypted = aes.encrypt(msg)
-            client_socket.sendall(encrypted.encode())
+            nonce, ciphertext, tag = aes.encrypt(msg)
+            client_socket.sendall(nonce + tag + ciphertext)
 
             chat_display.config(state='normal')
             chat_display.insert('end', f"You: {msg}\n")
@@ -49,7 +49,10 @@ def launch_gui():
                 data = client_socket.recv(2048)
                 if data:
                     try:
-                        decrypted = aes.decrypt(data.decode())
+                        nonce = data[:16]
+                        tag = data[16:32]
+                        ciphertext = data[32:]
+                        decrypted = aes.decrypt(nonce, ciphertext, tag).decode()
                         chat_display.config(state='normal')
                         chat_display.insert('end', f"{decrypted}\n")
                         chat_display.config(state='disabled')
@@ -74,7 +77,10 @@ def launch_cli():
                 data = client_socket.recv(2048)
                 if data:
                     try:
-                        decrypted = aes.decrypt(data.decode())
+                        nonce = data[:16]
+                        tag = data[16:32]
+                        ciphertext = data[32:]
+                        decrypted = aes.decrypt(nonce, ciphertext, tag).decode()
                         print(f"\n{decrypted}")
                     except:
                         print("\n❌ Failed to decrypt message.")
@@ -85,8 +91,8 @@ def launch_cli():
         while True:
             msg = input("You (@recipient: message): ").strip()
             if msg:
-                encrypted = aes.encrypt(msg)
-                client_socket.sendall(encrypted.encode())
+                nonce, ciphertext, tag = aes.encrypt(msg)
+                client_socket.sendall(nonce + tag + ciphertext)
 
     threading.Thread(target=receive_messages, daemon=True).start()
     send_messages()
