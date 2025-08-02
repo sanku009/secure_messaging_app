@@ -1,15 +1,29 @@
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
+from Crypto.Hash import SHA256
+import base64
 
 class AESCipher:
-    def __init__(self, key: bytes):
-        self.key = key  # Must be bytes and 16/24/32 bytes long
+    def __init__(self, password: str):
+        # Derive a secure 32-byte key from the password using SHA256
+        self.key = SHA256.new(data=password.encode()).digest()
 
-    def encrypt(self, raw: bytes):
+    def encrypt(self, plaintext: str) -> str:
         cipher = AES.new(self.key, AES.MODE_EAX)
-        ciphertext, tag = cipher.encrypt_and_digest(raw)
-        return cipher.nonce, ciphertext, tag
+        nonce = cipher.nonce
+        ciphertext, tag = cipher.encrypt_and_digest(plaintext.encode())
 
-    def decrypt(self, nonce: bytes, ciphertext: bytes, tag: bytes):
+        # Combine nonce, tag, and ciphertext for storage/transmission
+        encrypted_data = nonce + tag + ciphertext
+        return base64.b64encode(encrypted_data).decode()
+
+    def decrypt(self, encrypted_b64: str) -> str:
+        encrypted_data = base64.b64decode(encrypted_b64.encode())
+
+        nonce = encrypted_data[:16]
+        tag = encrypted_data[16:32]
+        ciphertext = encrypted_data[32:]
+
         cipher = AES.new(self.key, AES.MODE_EAX, nonce=nonce)
-        return cipher.decrypt_and_verify(ciphertext, tag)
+        plaintext = cipher.decrypt_and_verify(ciphertext, tag)
+        return plaintext.decode()

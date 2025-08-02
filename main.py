@@ -45,12 +45,15 @@ class SecureMessengerApp:
         if not key or not msg:
             messagebox.showwarning("Input Missing", "Please provide both key and message.")
             return
-        cipher = AESCipher(key)
-        encrypted = cipher.encrypt(msg)
-        self.queue.enqueue(encrypted)
-        timestamp = datetime.datetime.now().strftime("%H:%M:%S")
-        self.output_text.insert(tk.END, f"[{timestamp}] 🔒 Encrypted & Queued: {encrypted}\n")
-        self.msg_entry.delete(0, tk.END)
+        try:
+            cipher = AESCipher(key)
+            encrypted = cipher.encrypt(msg)
+            self.queue.enqueue(encrypted)
+            timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+            self.output_text.insert(tk.END, f"[{timestamp}] 🔒 Encrypted & Queued: {encrypted}\n")
+            self.msg_entry.delete(0, tk.END)
+        except Exception as e:
+            messagebox.showerror("Encryption Error", str(e))
 
     def decrypt_message(self):
         key = self.key_entry.get()
@@ -66,8 +69,8 @@ class SecureMessengerApp:
             decrypted = cipher.decrypt(encrypted)
             timestamp = datetime.datetime.now().strftime("%H:%M:%S")
             self.output_text.insert(tk.END, f"[{timestamp}] ✅ Decrypted: {decrypted}\n")
-        except:
-            self.output_text.insert(tk.END, "❌ Decryption failed.\n")
+        except Exception as e:
+            self.output_text.insert(tk.END, f"❌ Decryption failed: {str(e)}\n")
 
     def clear_output(self):
         self.output_text.delete(1.0, tk.END)
