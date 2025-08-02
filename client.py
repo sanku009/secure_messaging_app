@@ -18,7 +18,7 @@ key = b'12345'  # Use the same key in server.py
 aes = AESCipher(key)
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client_socket.connect(('127.0.0.1', 9999))  # Replace with your server IP and port
+client_socket.connect(('127.0.0.1', 5000))  # Replace with your server IP and port
 
 send_button = tk.Button(root, text="Send")
 send_button.pack(pady=5)
