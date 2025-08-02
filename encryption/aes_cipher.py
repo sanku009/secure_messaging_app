@@ -1,24 +1,19 @@
 from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
 
-class AESCipher:
-    NONCE_SIZE = 16
-    TAG_SIZE = 16
+# Use a secure 16-byte or 32-byte key
+SECRET_KEY = b'123456'  # You can load this from env or config
 
-    def __init__(self, key: bytes):
-        if len(key) not in (16, 24, 32):
-            raise ValueError("Key must be 16, 24, or 32 bytes long")
-        self.key = key
+def encrypt_message(message: str) -> bytes:
+    nonce = get_random_bytes(16)
+    cipher = AES.new(SECRET_KEY, AES.MODE_EAX, nonce=nonce)
+    ciphertext, tag = cipher.encrypt_and_digest(message.encode())
+    return nonce + tag + ciphertext
 
-    def encrypt(self, data: bytes) -> bytes:
-        cipher = AES.new(self.key, AES.MODE_EAX)
-        ciphertext, tag = cipher.encrypt_and_digest(data)
-        return cipher.nonce + tag + ciphertext
-
-    def decrypt(self, data: bytes) -> bytes:
-        if len(data) < self.NONCE_SIZE + self.TAG_SIZE:
-            raise ValueError("Invalid data. Too short for nonce and tag.")
-        nonce = data[:self.NONCE_SIZE]
-        tag = data[self.NONCE_SIZE:self.NONCE_SIZE + self.TAG_SIZE]
-        ciphertext = data[self.NONCE_SIZE + self.TAG_SIZE:]
-        cipher = AES.new(self.key, AES.MODE_EAX, nonce=nonce)
-        return cipher.decrypt_and_verify(ciphertext, tag)
+def decrypt_message(encrypted_data: bytes) -> str:
+    nonce = encrypted_data[:16]
+    tag = encrypted_data[16:32]
+    ciphertext = encrypted_data[32:]
+    cipher = AES.new(SECRET_KEY, AES.MODE_EAX, nonce=nonce)
+    decrypted = cipher.decrypt_and_verify(ciphertext, tag)
+    return decrypted.decode()
