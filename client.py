@@ -14,7 +14,7 @@ chat_display.pack(fill='both', expand=True)
 entry = tk.Entry(root)
 entry.pack(fill='x', padx=5, pady=5)
 
-key = b'hellosanketkarki'  # Use the same key in server.py
+key = b'12345'  # Use the same key in server.py
 aes = AESCipher(key)
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

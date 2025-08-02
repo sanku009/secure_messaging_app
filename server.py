@@ -1,8 +1,11 @@
 import socket
 import threading
 from encryption.aes_cipher import AESCipher
-
-key = b'hellosanketkarki'  # Must match client.py
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_socket.bind(('0.0.0.0', 5000))  # Accept connections from any IP
+server_socket.listen(5)
+print("Server is running and listening...")
+key = b'12345'  # Must match client.py
 aes = AESCipher(key)
 
 HOST = '0.0.0.0'
