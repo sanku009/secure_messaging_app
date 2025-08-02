@@ -13,9 +13,9 @@ aes = AESCipher(key)
 clients = []  # List of sockets
 usernames = {}  # socket -> username
 
-def broadcast(sender_socket, message, recipient_name):
+def broadcast(sender_socket, message):
     for client in clients:
-        if client != sender_socket and usernames.get(client) == recipient_name:
+        if client != sender_socket:
             try:
                 client.sendall(message)
             except:
@@ -43,19 +43,11 @@ def handle_client(client_socket, address):
                 decrypted = aes.decrypt(nonce, ciphertext, tag).decode()
                 print(f"[{username}] {decrypted}")
 
-                if decrypted.startswith("@"):
-                    try:
-                        recipient, actual_msg = decrypted[1:].split(":", 1)
-                        recipient = recipient.strip()
-                        actual_msg = actual_msg.strip()
+                # Broadcast to all other clients
+                new_nonce, new_cipher, new_tag = aes.encrypt(f"{username}: {decrypted}")
+                outgoing = new_nonce + new_tag + new_cipher
+                broadcast(client_socket, outgoing)
 
-                        new_nonce, new_cipher, new_tag = aes.encrypt(f"{username}: {actual_msg}")
-                        outgoing = new_nonce + new_tag + new_cipher
-                        broadcast(client_socket, outgoing, recipient)
-                    except:
-                        print(f"[!] Invalid message format from {username}")
-                else:
-                    print(f"[!] No recipient specified in message from {username}")
             except:
                 print(f"[!] Message from {username} failed to decrypt.")
     finally:
