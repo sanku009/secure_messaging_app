@@ -2,7 +2,7 @@ import socket
 import threading
 from encryption.aes_cipher import AESCipher
 
-key = b'Sixteen byte key'  # Must match client.py
+key = b'12345'  # Must match client.py
 aes = AESCipher(key)
 
 HOST = '0.0.0.0'
