@@ -49,7 +49,7 @@ def handle_client(client_socket, address):
                         recipient = recipient.strip()
                         actual_msg = actual_msg.strip()
 
-                        new_nonce, new_cipher, new_tag = aes.encrypt(f"{username}: {actual_msg}".encode())
+                        new_nonce, new_cipher, new_tag = aes.encrypt(f"{username}: {actual_msg}")
                         outgoing = new_nonce + new_tag + new_cipher
                         broadcast(client_socket, outgoing, recipient)
                     except:
