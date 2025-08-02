@@ -1,101 +1,75 @@
 import socket
-import threading
-import tkinter as tk
-from tkinter import scrolledtext, messagebox, simpledialog
 from encryption.aes_cipher import AESCipher
 
-HOST = '127.0.0.1'  # Change this to server IP
-PORT = 5000
+HOST = '127.0.0.1'
+PORT = 65432
 
-SECRET_KEY = b'mysecretaeskey12'  # Must match server key
+def start_client():
+    key = input("Enter your encryption key: ")
+    cipher = AESCipher(key)
 
-cipher = AESCipher(SECRET_KEY)
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((HOST, PORT))
 
-class SecureMessengerClient:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("🔐 Secure Messaging Client")
-        self.root.geometry("600x400")
+        # Receive server key hash
+        server_key_hash = s.recv(1024)
 
-        self.chat_area = scrolledtext.ScrolledText(root, state='disabled')
-        self.chat_area.pack(expand=True, fill='both')
+        # Send client key hash
+        client_key_hash = key.encode()
+        s.sendall(client_key_hash)
 
-        self.entry_message = tk.Entry(root)
-        self.entry_message.pack(fill='x', padx=10, pady=10)
-        self.entry_message.bind("<Return>", self.send_message)
-
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        self.nickname = simpledialog.askstring("Nickname", "Please enter your nickname", parent=root)
-        if not self.nickname:
-            messagebox.showerror("Error", "Nickname required")
-            root.destroy()
+        if client_key_hash != server_key_hash:
+            print("Error: Server encryption key mismatch. Closing connection.")
+            s.close()
             return
+        else:
+            print("Encryption keys matched. Starting secure chat.")
 
-        try:
-            self.sock.connect((HOST, PORT))
-        except Exception as e:
-            messagebox.showerror("Connection Error", str(e))
-            root.destroy()
-            return
+        print("Connected to server. Type your messages.")
+        while True:
+            msg = input("You: ")
+            encrypted = cipher.encrypt(msg)
+            s.sendall(encrypted.encode())
 
-        self.running = True
-        threading.Thread(target=self.receive_messages, daemon=True).start()
-
-        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
-
-    def send_message(self, event=None):
-        message = self.entry_message.get()
-        if not message:
-            return
-        full_message = f"{self.nickname}: {message}"
-        try:
-            encrypted_msg = cipher.encrypt(full_message.encode())
-            msg_len = len(encrypted_msg).to_bytes(4, byteorder='big')
-            self.sock.sendall(msg_len + encrypted_msg)
-            self.entry_message.delete(0, tk.END)
-        except Exception as e:
-            messagebox.showerror("Send Error", str(e))
-
-    def receive_messages(self):
-        while self.running:
+            data = s.recv(1024)
             try:
-                raw_msglen = self.recvall(4)
-                if not raw_msglen:
-                    break
-                msglen = int.from_bytes(raw_msglen, byteorder='big')
-                encrypted_msg = self.recvall(msglen)
-                if not encrypted_msg:
-                    break
-
-                decrypted_msg = cipher.decrypt(encrypted_msg).decode()
-                self.display_message(decrypted_msg)
+                decrypted = cipher.decrypt(data.decode())
+                print("Server:", decrypted)
             except Exception as e:
-                print(f"Receive error: {e}")
-                break
+                print("Failed to decrypt message:", e)
 
-        self.sock.close()
+if __name__ == '__main__':
+    start_client()
 
-    def recvall(self, n):
-        data = b''
-        while len(data) < n:
-            packet = self.sock.recv(n - len(data))
-            if not packet:
-                return None
-            data += packet
-        return data
 
-    def display_message(self, message):
-        self.chat_area.config(state='normal')
-        self.chat_area.insert(tk.END, message + '\n')
-        self.chat_area.config(state='disabled')
-        self.chat_area.see(tk.END)
+from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
+import base64
+import hashlib
 
-    def on_close(self):
-        self.running = False
-        self.root.destroy()
+class AESCipher:
+    def __init__(self, key: str):
+        # Hash key to 256-bit (32 bytes)
+        self.key = hashlib.sha256(key.encode()).digest()
 
-if __name__ == "__main__":
-    root = tk.Tk()
-    client = SecureMessengerClient(root)
-    root.mainloop()
+    def encrypt(self, raw: str) -> str:
+        raw_bytes = raw.encode('utf-8')
+        cipher = AES.new(self.key, AES.MODE_EAX)
+        ciphertext, tag = cipher.encrypt_and_digest(raw_bytes)
+        
+        # Concatenate nonce, tag, and ciphertext, then base64 encode
+        encrypted_data = cipher.nonce + tag + ciphertext
+        return base64.b64encode(encrypted_data).decode('utf-8')  # base64 encode to send over network
+
+    def decrypt(self, enc: str) -> str:
+        enc = base64.b64decode(enc)  # Decode the base64 encoded string from the network
+        nonce = enc[:16]  # First 16 bytes are the nonce
+        tag = enc[16:32]  # Next 16 bytes are the tag
+        ciphertext = enc[32:]  # Remaining bytes are the ciphertext
+
+        cipher = AES.new(self.key, AES.MODE_EAX, nonce=nonce)
+        try:
+            decrypted = cipher.decrypt_and_verify(ciphertext, tag)
+            return decrypted.decode('utf-8')
+        except ValueError:
+            raise ValueError("MAC check failed")
